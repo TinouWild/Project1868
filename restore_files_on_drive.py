@@ -1,6 +1,5 @@
 from O365 import Account, FileSystemTokenBackend, MSGraphProtocol
 import os
-import json
 from datetime import datetime
 
 protocol = MSGraphProtocol(api_version='beta')
@@ -11,19 +10,20 @@ account = Account(credentials, protocol=protocol, token_backend=token_backend)
 account.authenticate(scopes=['basic', 'message_all', 'onedrive_all', 'address_book_all'])
 
 storage = account.storage()
-folder_resto = storage.get_default_drive().get_root_folder()
+drive = storage.get_default_drive().get_root_folder()
 
-date = datetime.today().strftime('%a %d %B %Y -- %H:%M:%S:%f')
+dir_resto_name = datetime.today().strftime('Restore %A %d %B %Y %H.%M.%S.%f')
+folder_resto = drive.create_child_folder(dir_resto_name)
 
 
-def list_files(startpath):
-    liste_files = []
+def upload_directory(startpath):
     for root, dirs, files in os.walk(startpath):
-        level = root.replace(startpath, '').count(os.sep)
-        indent = ' ' * 4 * level
-        print('{}{}/'.format(indent, os.path.basename(root)))
-        liste_files.append('{}{}/'.format(indent, os.path.basename(root)))
-        sub_indent = ' ' * 4 * (level + 1)
-        for f in files:
-            print('{}{}'.format(sub_indent, f))
-            liste_files.append('{}{}'.format(sub_indent, f))
+        if dirs.__len__() > 0:
+            current_drive = folder_resto.create_child_folder(os.path.basename(root))
+            print("DIR - {} is uploading...".format(os.path.basename(root)))
+            for f in files:
+                current_drive.upload_file(root + '/' + f)
+                print("FILE - {} is uploading...".format(f))
+
+
+upload_directory("/home/etienne/Documents/Perso/Project1868/Default Drive")
